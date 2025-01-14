@@ -1,2 +1,2 @@
 # Random-C-Stuff
-There will be various C projects here that don't deserve a separate repository.
+Here you’ll find various projects written in different programming languages that don’t deserve their own repository.
