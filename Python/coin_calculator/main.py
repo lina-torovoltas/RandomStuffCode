@@ -9,7 +9,7 @@ from colorama import Fore, Style, init
 init(autoreset=True)
 
 
-coin_list = ["xmr", "qrl"]
+coin_list = ["xmr", "qrl", "sal", "zeph"]
 
 
 
@@ -55,27 +55,68 @@ def calculate_and_display_rewards(hashrate, coin):
 
 
 # Gets cryptocurrency statistics (difficulty, block reward and price) from the API and returns them as a tuple or 0.0 in case of error
-def get_coin_stats(coin: str) -> Tuple[float, float, float]:
+def get_hashvault_coin_stats(coin: str) -> Tuple[float, float, float]:
+    try:
+        if coin == "sal":
+            url = "https://api.hashvault.pro/v3/salvium/"
+        elif coin == "zeph":
+            url = "https://api.hashvault.pro/v3/zephyr/"
+        else:
+            raise ValueError(f"\n{Fore.RED}Coin '{coin}' is not supported by HashVault.{Style.RESET_ALL}\n")
+
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+
+        # Извлечение данных из JSON
+        difficulty = data['network_statistics']['difficulty']
+
+        # Корректируем значение reward_block
+        if coin == "sal":
+            reward_block = data['network_statistics']['value'] / 10**8
+        elif coin == "zeph":
+            reward_block = data['network_statistics']['value'] / 10**12
+
+        price = data['market']['price_usd']
+
+        return difficulty, reward_block, price
+
+    except requests.exceptions.RequestException as e:
+        print(f"\n{Fore.RED}Error fetching HashVault coin stats: {e}{Style.RESET_ALL}\n")
+        return 0.0, 0.0, 0.0
+    except (KeyError, ValueError) as ve:
+        print(f"{Fore.RED}{ve}{Style.RESET_ALL}")
+        return 0.0, 0.0, 0.0
+
+def get_minerstat_coin_stats(coin: str) -> Tuple[float, float, float]:
     try:
         response = requests.get(f'https://api.minerstat.com/v2/coins?list={coin}')
         response.raise_for_status()
         data = response.json()
-        coin_data = next(
-            (item for item in data if item["coin"].upper() == coin.upper()),
-            None
-        )
+
+        coin_data = next((item for item in data if item["coin"].upper() == coin.upper()), None)
 
         if coin_data is None:
-            raise ValueError(f"Coin '{coin}' not found in the response.")
+            raise ValueError(f"\n{Fore.RED}Coin '{coin}' not found in the response.{Style.RESET_ALL}\n")
 
         return coin_data['difficulty'], coin_data['reward_block'], coin_data['price']
 
     except requests.exceptions.RequestException as e:
-        print(f"{Fore.RED}Error fetching coin stats: {e}{Style.RESET_ALL}")
+        print(f"\n{Fore.RED}Error fetching MinerStat coin stats: {e}{Style.RESET_ALL}\n")
         return 0.0, 0.0, 0.0
     except ValueError as ve:
         print(f"{Fore.RED}{ve}{Style.RESET_ALL}")
         return 0.0, 0.0, 0.0
+
+def get_coin_stats(coin: str) -> Tuple[float, float, float]:
+    if coin not in coin_list:
+        print(f"\n{Fore.RED}Coin '{coin}' is not in the supported list.{Style.RESET_ALL}\n")
+        return 0.0, 0.0, 0.0
+
+    if coin in ["sal", "zeph"]:
+        return get_hashvault_coin_stats(coin)
+    else:
+        return get_minerstat_coin_stats(coin)
 
 
 
@@ -103,4 +144,4 @@ while True:
         elif coin == "best":
             find_best_coin(hashrate)
     else:
-        print(f"\n{Fore.RED}Invalid input. Please enter one of the following cryptocurrencies: xmr, qrl, or 'best'.{Style.RESET_ALL}\n")
+        print(f"\n{Fore.RED}Invalid input. Please enter one of the following cryptocurrencies: \n1.xmr \n2.qrl \n3.sal \n4.zeph \n5.'best'{Style.RESET_ALL}\n")
