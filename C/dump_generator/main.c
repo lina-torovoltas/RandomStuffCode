@@ -6,13 +6,13 @@
 
 
 
-# Returns a random number within the specified range
+// Returns a random number within the specified range
 int randint(int min, int max) {
     return rand() % (max - min + 1) + min;
 }
 
 
-# Generates hexadecimal dump by specified parameters
+// Generates hexadecimal dump by specified parameters
 void generate_hex_dump(uint64_t lines, uint64_t rows) {
     FILE *file = fopen("dump.txt", "w");
     if (file == NULL) {
@@ -35,7 +35,7 @@ void generate_hex_dump(uint64_t lines, uint64_t rows) {
     printf("File dump.txt has been successfully generated in hexadecimal format.\n");
 }
 
-# Generates an octal dump by specified parameters
+// Generates an octal dump by specified parameters
 void generate_octal_dump(int lines, int rows) {
     FILE *file = fopen("dump.txt", "w");
     if (file == NULL) {
@@ -60,6 +60,7 @@ void generate_octal_dump(int lines, int rows) {
 
 
 
+// The main function of the code that requests the number of rows and columns to generate the dump
 int main(int argc, char *argv[]) {
     srand(time(NULL));
 
