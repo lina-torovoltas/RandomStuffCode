@@ -40,18 +40,15 @@ or
 
 ## Building
 
-1. Clone the repository
-2. Navigate to the project folder
+1. Clone the repository.
+2. Navigate to the project folder.
 3. To install GCC on Debian/Ubuntu, run the following commands:
     ```bash
-    sudo apt update
-    sudo apt install gcc
+    $ sudo apt update
+    $ sudo apt install gcc
     ```
 4. Compile the Program using GCC:
     ```bash
-    gcc -o dumpgen main.c
+    $ gcc -o dumpgen main.c
     ```
-5. And run:
-    ```bash
-    ./dumpgen -h/-o
-    ```
+5. And run!
