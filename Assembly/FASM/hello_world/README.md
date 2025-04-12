@@ -1,7 +1,5 @@
 # My First FASM Program
 
-## Description
-
 This is an example program written in assembly using FASM (Flat Assembler).  
 The program calculates the length of a string and outputs it to the console.
 
