@@ -20,8 +20,8 @@ It supports basic operations such as addition, subtraction, multiplication, divi
 
 ## Building
 
-1. Clone the repository
-2. Navigate to the project folder
+1. Clone the repository.
+2. Navigate to the project folder.
 3. To install GCC on Debian/Ubuntu, run the following commands:
     ```bash
     $ sudo apt update
