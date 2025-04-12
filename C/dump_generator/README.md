@@ -7,7 +7,12 @@ This is a C program that generates a random memory-like dump in either hexadecim
 - Generates a dump of random values in either hexadecimal (-h) or octal (-o) format.
 - Allows custom number of lines and number of bytes (or values) per line.
 
-## Usage
+## Notes
+
+- For hexadecimal (-h): max lines = 4294967296
+- For octal (-o): max lines = 4096
+
+# Usage
 
   ```bash
   $ ./dumpgen -h
@@ -32,11 +37,6 @@ or
   0001 03 11 02 71 17
   ...
   ```
-
-# Notes
-
-- For hexadecimal (-h): max lines = 4294967296
-- For octal (-o): max lines = 4096
 
 ## Building
 
