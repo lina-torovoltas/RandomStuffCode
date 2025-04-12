@@ -24,14 +24,14 @@ It supports basic operations such as addition, subtraction, multiplication, divi
 2. Navigate to the project folder
 3. To install GCC on Debian/Ubuntu, run the following commands:
     ```bash
-    sudo apt update
-    sudo apt install gcc
+    $ sudo apt update
+    $ sudo apt install gcc
     ```
 4. Compile the Program using GCC:
     ```bash
-    gcc -o calculator expression_calculator.c -lm
+    $ gcc -o calculator expression_calculator.c -lm
     ```
 5. And run:
     ```bash
-    ./calculator
+    $ ./calculator
     ```
