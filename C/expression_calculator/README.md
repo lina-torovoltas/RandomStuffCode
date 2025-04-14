@@ -29,7 +29,7 @@ It supports basic operations such as addition, subtraction, multiplication, divi
     ```
 4. Compile the Program using GCC:
     ```bash
-    $ gcc -o calculator expression_calculator.c -lm
+    $ gcc -o calculator main.c -lm
     ```
 5. And run:
     ```bash
