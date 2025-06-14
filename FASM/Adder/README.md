@@ -1,7 +1,7 @@
-# Hello World!
+# Adder
 
 This program is written in assembly using FASM (Flat Assembler) for Linux.  
-The program outputs message to the console.
+The program adds 2 input numbers and outputs the result.
 
 ## Building
 
@@ -14,9 +14,9 @@ The program outputs message to the console.
     ```
 4. Compile the program using FASM:
     ```bash
-    fasm main.asm hello_world
+    fasm main.asm adder
     ```
 5. And run:
     ```
-    ./hello_world
+    ./adder
     ```

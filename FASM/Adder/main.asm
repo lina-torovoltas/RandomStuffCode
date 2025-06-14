@@ -1,14 +1,15 @@
 ; This program only works on Linux!!!
 
-format ELF64 executable
-entry main
+format ELF64 executable 3
+entry start
+
+
+
 segment readable executable
 
-
-
-main:
-    mov rax, 0
-    mov rdi, 0 
+start:
+    xor rax, rax
+    xor rdi, rdi
     mov rsi, input1
     mov rdx, 20
     syscall
@@ -16,8 +17,7 @@ main:
     call atoi
     mov rbx, rax 
 
-    mov rax, 0
-    mov rdi, 0
+    xor rax, rax
     mov rsi, input2
     mov rdx, 20
     syscall
@@ -28,7 +28,7 @@ main:
     mov rcx, result + 20
     mov rbx, 10
 
-    
+
 .convert:
     xor rdx, rdx
     div rbx
@@ -38,17 +38,20 @@ main:
     test rax, rax
     jnz .convert
 
-    mov rax, 1
-    mov rdi, 1
+    xor rax, rax
+    inc rax
+    xor rdi, rdi
+    inc rdi
     mov rsi, rcx
     mov rdx, result + 20
     sub rdx, rcx
     syscall
 
-    mov rax, 1
-    mov rdi, 1
+    xor rax, rax
+    inc rax
     mov rsi, newline
-    mov rdx, 1
+    xor rdx, rdx
+    inc rdx
     syscall
 
     mov rax, 60
