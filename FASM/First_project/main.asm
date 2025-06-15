@@ -7,16 +7,37 @@ entry start
 
 segment readable executable
 
-start:
+macro clr reg { xor reg,reg }
+
+macro push [arg] { push arg }
+
+macro pop [arg] { pop arg }
+
+macro exit {
+    mov rax, 60
+    clr rdi
+    syscall
+}
+
+macro print str, str_len {
+    push rax, rdi, rsi, rdx
+
+    clr rax
     inc rax
+    clr rdi
     inc rdi
-    mov rsi, msg
-    mov rdx, msg_len
+    mov rsi, str
+    mov rdx, str_len
     syscall
 
-    mov rax, 60
-    xor rdi, rdi
-    syscall
+    pop rdx, rsi, rdi, rax
+}
+
+
+start:
+    print msg, msg_len
+
+    exit
 
 
 

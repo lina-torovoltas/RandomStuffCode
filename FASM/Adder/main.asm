@@ -7,9 +7,17 @@ entry start
 
 segment readable executable
 
+macro clr reg { xor reg,reg }
+
+macro exit {
+    mov rax, 60
+    clr rdi
+    syscall
+}
+
 start:
-    xor rax, rax
-    xor rdi, rdi
+    clr rax
+    clr rdi
     mov rsi, input1
     mov rdx, 20
     syscall
@@ -17,7 +25,7 @@ start:
     call atoi
     mov rbx, rax 
 
-    xor rax, rax
+    clr rax
     mov rsi, input2
     mov rdx, 20
     syscall
@@ -28,9 +36,8 @@ start:
     mov rcx, result + 20
     mov rbx, 10
 
-
 .convert:
-    xor rdx, rdx
+    clr rdx
     div rbx
     dec rcx
     add dl, '0'
@@ -38,31 +45,27 @@ start:
     test rax, rax
     jnz .convert
 
-    xor rax, rax
+    clr rax
     inc rax
-    xor rdi, rdi
+    clr rdi
     inc rdi
     mov rsi, rcx
     mov rdx, result + 20
     sub rdx, rcx
     syscall
 
-    xor rax, rax
+    clr rax
     inc rax
     mov rsi, newline
-    xor rdx, rdx
+    clr rdx
     inc rdx
     syscall
 
-    mov rax, 60
-    xor rdi, rdi
-    syscall
-
+    exit
 
 atoi:
-    xor rax, rax
-    xor rcx, rcx
-
+    clr rax
+    clr rcx
 
 .next_char:
     mov cl, [rsi]
@@ -77,7 +80,6 @@ atoi:
     add rax, rcx
     inc rsi
     jmp .next_char
-
 
 .done:
     ret
