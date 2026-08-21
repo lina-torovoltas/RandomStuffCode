@@ -1,3 +1,5 @@
+// zig version 0.16.0
+
 const std = @import("std");
 const print = std.debug.print;
 
