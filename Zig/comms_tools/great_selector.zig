@@ -18,13 +18,13 @@ pub fn main(init: std.process.Init) !void {
     var options_list: Vec([]const u8) = .empty;
 
     const title =
-        "\x1b[93mThe super pretentious\x1b[0m " ++
+        "The \x1b[93msuper pretentious\x1b[0m " ++
         "\x1b[1;32mGreat Selector\x1b[0m " ++
         "\x1b[90mv0.0.0.0.16.0.0\x1b[0m\n";
 
     print("{s}\n", .{title});
 
-    try io.sleep(.fromSeconds(1), .awake);
+    try io.sleep(.fromMilliseconds(200), .awake);
 
     defer {
         for (options_list.items) |item| {
