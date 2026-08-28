@@ -9,18 +9,57 @@ const hmac = std.crypto.auth.hmac.sha2.HmacSha256;
 
 
 
-fn Hex(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
-    var converted_str: std.ArrayList(u8) = .empty;
-    defer converted_str.deinit(allocator);
+fn Base58(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
+    if (bytes.len == 0) {
+        return try allocator.alloc(u8, 0);
+    }
 
-    const hex_chars = "0123456789abcdef";
+    const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    var zeroes: usize = 0;
     
-    for (bytes) |byte| {
-        try converted_str.append(allocator, hex_chars[byte >> 4]);
-        try converted_str.append(allocator, hex_chars[byte & 0x0f]);
+    for (bytes, 0..) |byte, index| {
+        if (byte != 0) {
+            zeroes = index;
+            break;
+        }
+    } else {
+        zeroes = bytes.len;
     }
     
-    return try converted_str.toOwnedSlice(allocator);
+    const input = try allocator.alloc(u8, bytes.len);
+    @memcpy(input, bytes);
+    defer allocator.free(input);
+
+    var converted_str: std.ArrayListUnmanaged(u8) = .empty;
+    errdefer converted_str.deinit(allocator); 
+
+    var start = zeroes;
+    
+    while (start < input.len) {
+        var remainder: u32 = 0;
+        var i = start;
+        
+        while (i < input.len) : (i += 1) {
+            const acc: u32 = @as(u32, input[i]) + (remainder << 8);
+            
+            input[i] = @intCast(acc / 58);
+            remainder = acc % 58;
+        }
+        
+        if (input[start] == 0) {
+            start += 1;
+        }
+        
+        try converted_str.append(allocator, alphabet[remainder]);
+    }
+
+    try converted_str.appendNTimes(allocator, alphabet[0], zeroes);
+
+    const result = try converted_str.toOwnedSlice(allocator);
+    
+    std.mem.reverse(u8, result);
+    
+    return result;
 }
 
 
@@ -29,11 +68,13 @@ pub fn main(init: std.process.Init) !void {
     const alloc = init.gpa;
     const rng_impl: std.Random.IoSource = .{ .io = io };
     const rand = rng_impl.interface();
+    const args = try init.minimal.args.toSlice(init.arena.allocator());
 
     var nonce: [16]u8 = undefined;
     var buffer: [1024]u8 = undefined;
     var argon2_buffer: [48]u8 = undefined;
     var input = std.Io.File.stdin().reader(io, &buffer);
+    var save_path: ?[]const u8 = null;
 
     var bytes_vec: Vec(u8) = .empty;
     defer bytes_vec.deinit(alloc);
@@ -43,6 +84,33 @@ pub fn main(init: std.process.Init) !void {
         "\x1b[1;32mMessage Encryptor\x1b[0m " ++
         "\x1b[90mv0.0.0.0.32.0.0\x1b[0m\n";
     const very_dramatic_text = "\n\x1b[31mEncrypting\x1b[0m the \x1b[1;31mmessage\x1b[0m . . . .\n\n";
+
+    {
+        var i: usize = 1;
+        
+        while (i < args.len) : (i += 1) {
+            const arg = args[i];
+    
+            if (!std.mem.eql(u8, arg, "-s")) {
+                print("Unknown argument: {s}\n", .{arg});
+                return;
+            }
+    
+            if (save_path != null) {
+                print("Error: -s given more than once\n", .{});
+                return;
+            }
+        
+            i += 1;
+            
+            if (i >= args.len) {
+                print("Error: -s requires a filename\n", .{});
+                return;
+            }
+            
+            save_path = args[i];
+        }
+    }
 
     print("{s}\n", .{title});
     
@@ -87,11 +155,13 @@ pub fn main(init: std.process.Init) !void {
     defer alloc.free(keystream);
     
     shake128(argon2_keystream, keystream, .{});
-    
-    for (message, 0..) |byte, i| {
-        try bytes_vec.append(alloc, byte ^ keystream[i]);
-    }
 
+    {
+        for (message, 0..) |byte, i| {
+            try bytes_vec.append(alloc, byte ^ keystream[i]);
+        }
+    }
+    
     const enc_message = bytes_vec.items;
     var hmac_stream = hmac.init(argon2_mac);
     
@@ -103,14 +173,25 @@ pub fn main(init: std.process.Init) !void {
     hmac_stream.final(&mac_buffer);
     
     const mac = mac_buffer[0..16];
-    const hex_nonce = try Hex(alloc, &nonce);
-    defer alloc.free(hex_nonce);
-    const hex_enc_message = try Hex(alloc, enc_message);
-    defer alloc.free(hex_enc_message);
-    const hex_mac = try Hex(alloc, mac);
-    defer alloc.free(hex_mac);
+    const comp_nonce = try Base58(alloc, &nonce);
+    defer alloc.free(comp_nonce);
+    const comp_enc_message = try Base58(alloc, enc_message);
+    defer alloc.free(comp_enc_message);
+    const comp_mac = try Base58(alloc, mac);
+    defer alloc.free(comp_mac);
 
     try io.sleep(.fromSeconds(1), .awake);
+
+    print("Encrypted message: \n{s}:{s}:{s}\n", .{comp_mac, comp_nonce, comp_enc_message});
+
+    if (save_path) |path| {
+        const out_file = try std.Io.Dir.cwd().createFile(io, path, .{});
+        defer out_file.close(io);
+        
+        try out_file.writeStreamingAll(io, mac);
+        try out_file.writeStreamingAll(io, &nonce);
+        try out_file.writeStreamingAll(io, enc_message);
     
-    print("Encrypted message: \n{s}:{s}:{s}\n", .{hex_nonce, hex_enc_message, hex_mac});
+        print("Saved to {s}\n", .{path});
+    }
 }
