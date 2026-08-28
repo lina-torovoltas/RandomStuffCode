@@ -3,7 +3,8 @@
 const std = @import("std");
 const print = std.debug.print;
 const Vec = std.ArrayList;
-const hash = std.crypto.hash.sha3.Shake128.hash;
+const shake128 = std.crypto.hash.sha3.Shake128.hash;
+const argon2 = std.crypto.pwhash.argon2;
 
 
 
@@ -25,9 +26,16 @@ fn Hex(allocator: std.mem.Allocator, bytes: []const u8) ![]u8 {
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
     const alloc = init.gpa;
+    const rng_impl: std.Random.IoSource = .{ .io = io };
+    const rand = rng_impl.interface();
 
+    var nonce: [16]u8 = undefined;
     var buffer: [1024]u8 = undefined;
+    var argon2_keystream: [32]u8 = undefined;
     var input = std.Io.File.stdin().reader(io, &buffer);
+
+    var bytes_vec: Vec(u8) = .empty;
+    defer bytes_vec.deinit(alloc);
 
     const title =
         "The \x1b[93mreally sophisticated\x1b[0m " ++
@@ -68,13 +76,14 @@ pub fn main(init: std.process.Init) !void {
         
         try io.sleep(.fromMilliseconds(100), .awake);
     }
+
+    rand.bytes(&nonce);
+
+    try argon2.kdf(alloc, &argon2_keystream, key, &nonce, .{ .t = 3, .m = 65536, .p = 1 }, .argon2id, io);
     
     const keystream = try alloc.alloc(u8, message.len);
     defer alloc.free(keystream);
-    hash(key, keystream, .{});
-    
-    var bytes_vec: Vec(u8) = .empty;
-    defer bytes_vec.deinit(alloc);
+    shake128(&argon2_keystream, keystream, .{});
     
     for (message, 0..) |byte, i| {
         try bytes_vec.append(alloc, byte ^ keystream[i]);
@@ -82,12 +91,10 @@ pub fn main(init: std.process.Init) !void {
     
     const encrypted_message = try Hex(alloc, bytes_vec.items);
     defer alloc.free(encrypted_message);
-
-    const hex_keystream = try Hex(alloc, keystream);
-    defer alloc.free(hex_keystream);
+    const hex_nonce = try Hex(alloc, &nonce);
+    defer alloc.free(hex_nonce);
 
     try io.sleep(.fromSeconds(1), .awake);
     
-    print("Encrypted message: {s}\n", .{encrypted_message});
-    print("Keystream in hex: {s}\n", .{hex_keystream});
+    print("Encrypted message: \n{s}:{s}\n", .{hex_nonce, encrypted_message});
 }
