@@ -6,6 +6,7 @@ const Vec = std.ArrayList;
 const shake128 = std.crypto.hash.sha3.Shake128.hash;
 const argon2 = std.crypto.pwhash.argon2;
 const hmac = std.crypto.auth.hmac.sha2.HmacSha256;
+const zeroing = std.crypto.secureZero;
 
 
 
@@ -73,16 +74,16 @@ pub fn main(init: std.process.Init) !void {
     var nonce: [16]u8 = undefined;
     var buffer: [1024]u8 = undefined;
     var argon2_buffer: [48]u8 = undefined;
+    defer zeroing(u8, &argon2_buffer);
     var input = std.Io.File.stdin().reader(io, &buffer);
     var save_path: ?[]const u8 = null;
-
     var bytes_vec: Vec(u8) = .empty;
     defer bytes_vec.deinit(alloc);
 
+    const ver = "v1.5";
     const title =
         "The \x1b[93mreally sophisticated\x1b[0m " ++
-        "\x1b[1;32mMessage Encryptor\x1b[0m " ++
-        "\x1b[90mv0.0.0.0.32.0.0\x1b[0m\n";
+        "\x1b[1;32mMessage Encryptor\x1b[0m";
     const very_dramatic_text = "\n\x1b[31mEncrypting\x1b[0m the \x1b[1;31mmessage\x1b[0m . . . .\n\n";
 
     {
@@ -112,13 +113,14 @@ pub fn main(init: std.process.Init) !void {
         }
     }
 
-    print("{s}\n", .{title});
+    print("{s} \x1b[90m{s}\x1b[0m\n\n", .{title, ver});
     
     try io.sleep(.fromMilliseconds(200), .awake);
 
     print("Enter the message: ", .{});
 
-    var str = try input.interface.takeDelimiter('\n') orelse return;
+    var str: []const u8 = try input.interface.takeDelimiter('\n') orelse return;
+    str = std.mem.trimEnd(u8, str, "\r");
 
     if (str.len == 0) {
         print("You had to enter message!!!\n", .{});
@@ -127,9 +129,11 @@ pub fn main(init: std.process.Init) !void {
     
     const message = try alloc.dupe(u8, str);
     defer alloc.free(message);
+    defer zeroing(u8, message);
 
     print("Enter the key: ", .{});
     str = try input.interface.takeDelimiter('\n') orelse return;
+    str = std.mem.trimEnd(u8, str, "\r");
 
     if (str.len == 0) {
         print("You had to enter key!!!\n", .{});
@@ -138,6 +142,7 @@ pub fn main(init: std.process.Init) !void {
     
     const key = try alloc.dupe(u8, str);
     defer alloc.free(key);
+    defer zeroing(u8, key);
     
     for (very_dramatic_text) |char| {
         print("{c}", .{char});
@@ -153,6 +158,7 @@ pub fn main(init: std.process.Init) !void {
     const argon2_mac = argon2_buffer[32..48];
     const keystream = try alloc.alloc(u8, message.len);
     defer alloc.free(keystream);
+    defer zeroing(u8, keystream);
     
     shake128(argon2_keystream, keystream, .{});
 
@@ -182,12 +188,14 @@ pub fn main(init: std.process.Init) !void {
 
     try io.sleep(.fromSeconds(1), .awake);
 
-    print("Encrypted message: \n{s}:{s}:{s}\n", .{comp_mac, comp_nonce, comp_enc_message});
+    print("Encrypted message: \n{s}-{s}-{s}-{s}\n", .{ver, comp_mac, comp_nonce, comp_enc_message});
 
     if (save_path) |path| {
         const out_file = try std.Io.Dir.cwd().createFile(io, path, .{});
         defer out_file.close(io);
-        
+
+        const bin_ver: u8 = 1; 
+        try out_file.writeStreamingAll(io, &.{bin_ver});
         try out_file.writeStreamingAll(io, mac);
         try out_file.writeStreamingAll(io, &nonce);
         try out_file.writeStreamingAll(io, enc_message);
