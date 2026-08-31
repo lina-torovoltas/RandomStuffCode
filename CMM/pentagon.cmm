@@ -1,3 +1,5 @@
+// compiler used: https://github.com/KolibriOS/cminusminus
+
 ?include "write.h--"
 
 
