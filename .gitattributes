@@ -1,3 +1,4 @@
 *.cmm linguist-language=C
 *.hmm linguist-language=C
+*.h-- linguist-vendored
 *.hc linguist-language=HolyC
