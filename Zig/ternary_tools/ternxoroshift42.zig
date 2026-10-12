@@ -66,7 +66,7 @@ fn xor(num1: TernPlanes, num2: TernPlanes) TernPlanes {
     return result;
 }
 
-fn shl(num_planes: TernPlanes, shift: u5) TernPlanes {
+fn shl(num_planes: TernPlanes, shift: u6) TernPlanes {
     var result: TernPlanes = undefined;
 
     result.p = num_planes.p << shift;
@@ -75,7 +75,7 @@ fn shl(num_planes: TernPlanes, shift: u5) TernPlanes {
     return result;
 }
 
-fn shr(num_planes: TernPlanes, shift: u5) TernPlanes {
+fn shr(num_planes: TernPlanes, shift: u6) TernPlanes {
     var result: TernPlanes = undefined;
 
     result.p = num_planes.p >> shift;
@@ -85,8 +85,9 @@ fn shr(num_planes: TernPlanes, shift: u5) TernPlanes {
 }
 
 fn rotl(num_planes: TernPlanes, shift: u6) TernPlanes {
-    var result: TernPlanes = undefined;
     const back: u6 = 42 - shift;
+
+    var result: TernPlanes = undefined;
 
     result.p = (num_planes.p << shift) | (num_planes.p >> back);
     result.n = (num_planes.n << shift) | (num_planes.n >> back);
