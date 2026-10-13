@@ -1,7 +1,7 @@
 // zig version 0.16.0
 
 const std = @import("std");
-const tern = @import("ternlib.zig");
+const tern = @import("ternlib");
 const print = std.debug.print;
 
 
