@@ -12,13 +12,18 @@ const print = std.debug.print;
 /// if p = 1 and n = 0 then +
 /// if p = 0 and n = 1 then -
 /// if p = 0 and n = 0 then 0
-const TernPlanes = struct {
-    p: u42,
-    n: u42,
-};
+pub fn TernPlanes(comptime PlaneInt: type) type {
+    const Planes = struct {
+        p: PlaneInt,
+        n: PlaneInt,
+    };
 
+    return Planes;
+}
 
-fn get_tribble(planes: TernPlanes, shift: u6) i32 {
+pub const t42 = TernPlanes(u42);
+
+fn get_tribble(planes: t42, shift: u6) i32 {
     var value: i32 = 0;
     var weight: i32 = 1;
 
@@ -42,7 +47,7 @@ fn get_tribble(planes: TernPlanes, shift: u6) i32 {
     return value;
 }
 
-fn formatToHEP(num_planes: TernPlanes, buf: *[14]u8) void {
+fn formatToHEP(num_planes: t42, buf: *[14]u8) void {
     const digits = "mlkjihgfedcba=ABCDEFGHIJKLM";
 
     for (0..14) |i| {
@@ -54,11 +59,11 @@ fn formatToHEP(num_planes: TernPlanes, buf: *[14]u8) void {
 }
 
 
-fn xor(num1: TernPlanes, num2: TernPlanes) TernPlanes {
+fn xor(num1: t42, num2: t42) t42 {
     const num1_zero = ~(num1.p | num1.n);
     const num2_zero = ~(num2.p | num2.n);
 
-    var result: TernPlanes = undefined;
+    var result: t42 = undefined;
 
     result.p = (num1.p & num2_zero) | (num2.p & num1_zero) | (num1.n & num2.n);
     result.n = (num1.n & num2_zero) | (num2.n & num1_zero) | (num1.p & num2.p);
@@ -66,8 +71,8 @@ fn xor(num1: TernPlanes, num2: TernPlanes) TernPlanes {
     return result;
 }
 
-fn shl(num_planes: TernPlanes, shift: u6) TernPlanes {
-    var result: TernPlanes = undefined;
+fn shl(num_planes: t42, shift: u6) t42 {
+    var result: t42 = undefined;
 
     result.p = num_planes.p << shift;
     result.n = num_planes.n << shift;
@@ -75,8 +80,8 @@ fn shl(num_planes: TernPlanes, shift: u6) TernPlanes {
     return result;
 }
 
-fn shr(num_planes: TernPlanes, shift: u6) TernPlanes {
-    var result: TernPlanes = undefined;
+fn shr(num_planes: t42, shift: u6) t42 {
+    var result: t42 = undefined;
 
     result.p = num_planes.p >> shift;
     result.n = num_planes.n >> shift;
@@ -84,10 +89,10 @@ fn shr(num_planes: TernPlanes, shift: u6) TernPlanes {
     return result;
 }
 
-fn rotl(num_planes: TernPlanes, shift: u6) TernPlanes {
+fn rotl(num_planes: t42, shift: u6) t42 {
     const back: u6 = 42 - shift;
 
-    var result: TernPlanes = undefined;
+    var result: t42 = undefined;
 
     result.p = (num_planes.p << shift) | (num_planes.p >> back);
     result.n = (num_planes.n << shift) | (num_planes.n >> back);
@@ -96,8 +101,8 @@ fn rotl(num_planes: TernPlanes, shift: u6) TernPlanes {
 }
 
 
-fn step(num_planes: TernPlanes) TernPlanes {
-    var state: TernPlanes = undefined;
+fn step(num_planes: t42) t42 {
+    var state: t42 = undefined;
 
     state = xor(num_planes, shl(num_planes, 9));
     state = xor(state, shr(state, 22));
@@ -117,7 +122,7 @@ pub fn main(init: std.process.Init) !void {
         "\x1b[90mv42.14.7\x1b[0m\n";
         
     var buf: [14]u8 = undefined;
-    var state = TernPlanes{
+    var state: t42 = .{
         .p = 0b100001,
         .n = 0b011010,
     };
